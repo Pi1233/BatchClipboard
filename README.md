@@ -57,7 +57,7 @@ BatchClipboard/
 ### 1. Clone the Repository & Install Dependencies
 
 ```bash
-git clone [https://github.com/](https://github.com/)<your-username>/BatchClipboard.git
+git clone [https://github.com/](https://github.com/)Pi1233/BatchClipboard.git
 cd BatchClipboard
 pip install -r requirements.txt
 ```
