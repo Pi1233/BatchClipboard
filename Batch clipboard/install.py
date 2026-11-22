@@ -9,7 +9,9 @@ from pathlib import Path
 APP_NAME = "BatchClipboard"
 REG_RUN_PATH = r"Software\Microsoft\Windows\CurrentVersion\Run"
 INSTALL_DIR = Path(os.environ["LOCALAPPDATA"]) / APP_NAME
-SOURCE_SCRIPT = Path(__file__).resolve().parent / "batch_clipboard.py"
+BASE_DIR = Path(__file__).resolve().parent
+SOURCE_SCRIPT = BASE_DIR / "batch_clipboard.py"
+SOURCE_CONFIG = BASE_DIR / "config.json"
 
 
 def get_pythonw_path() -> Path:
@@ -41,11 +43,15 @@ def install():
     INSTALL_DIR.mkdir(parents=True, exist_ok=True)
     stop_existing_instance()
 
-    # 1. Copy main script to AppData
+    # 1. Copy main script & config to AppData
     target_script = INSTALL_DIR / "batch_clipboard.py"
     shutil.copy2(SOURCE_SCRIPT, target_script)
 
-    # 2. Create a silent launcher that records its PID and prevents duplicates
+    target_config = INSTALL_DIR / "config.json"
+    if SOURCE_CONFIG.exists() and not target_config.exists():
+        shutil.copy2(SOURCE_CONFIG, target_config)
+
+    # 2. Create silent launcher that tracks PID
     launcher_script = INSTALL_DIR / "launcher.pyw"
     launcher_code = f'''import os
 import subprocess
@@ -56,7 +62,6 @@ from pathlib import Path
 APP_DIR = Path(r"{INSTALL_DIR}")
 PID_FILE = APP_DIR / "app.pid"
 
-# Kill any older instance before starting
 if PID_FILE.exists():
     try:
         old_pid = int(PID_FILE.read_text(encoding="utf-8").strip())
@@ -81,7 +86,7 @@ if __name__ == "__main__":
 '''
     launcher_script.write_text(launcher_code, encoding="utf-8")
 
-    # 3. Register in Windows Startup (HKCU\...\Run)
+    # 3. Register in Windows Startup
     pythonw_exe = get_pythonw_path()
     startup_cmd = f'"{pythonw_exe}" "{launcher_script}"'
 
@@ -90,19 +95,18 @@ if __name__ == "__main__":
     ) as key:
         winreg.SetValueEx(key, APP_NAME, 0, winreg.REG_SZ, startup_cmd)
 
-    # 4. Launch silently in the background immediately
+    # 4. Launch silently right now
     subprocess.Popen(
         [str(pythonw_exe), str(launcher_script)],
         creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NO_WINDOW,
     )
 
     print("====================================================")
-    print(" BatchClipboard is now integrated with Windows!")
+    print(" BatchClipboard is now installed with Windows!")
     print("====================================================")
     print(f"• Installed to : {INSTALL_DIR}")
-    print("• Auto-start   : Enabled (visible in Task Manager -> Startup apps)")
-    print("• Status       : Running silently in the background right now")
-    print("• Toggle Batch : Double-tap Ctrl (or press Ctrl+Alt+B)")
+    print("• Auto-start   : Enabled (Task Manager -> Startup apps)")
+    print("• Toggle Batch : Double-tap Ctrl (or Ctrl+Alt+B)")
     print("• Kill Switch  : Ctrl+Alt+Shift+Q")
 
 
