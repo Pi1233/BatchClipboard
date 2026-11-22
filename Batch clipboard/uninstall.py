@@ -12,15 +12,13 @@ INSTALL_DIR = Path(os.environ["LOCALAPPDATA"]) / APP_NAME
 
 
 def release_modifier_keys():
-    """Ensure Ctrl, Alt, and Shift are not left stuck down."""
     user32 = ctypes.windll.user32
     KEYEVENTF_KEYUP = 0x0002
-    for vk in (0x11, 0x12, 0x10):  # VK_CONTROL, VK_MENU (Alt), VK_SHIFT
+    for vk in (0x11, 0x12, 0x10):
         user32.keybd_event(vk, 0, KEYEVENTF_KEYUP, 0)
 
 
 def stop_running_processes():
-    # 1. Kill via tracked PID file
     pid_file = INSTALL_DIR / "app.pid"
     if pid_file.exists():
         try:
@@ -33,10 +31,9 @@ def stop_running_processes():
         except Exception:
             pass
 
-    # 2. Fallback scan: kill any stray pythonw process running BatchClipboard
     ps_cmd = (
         "Get-CimInstance Win32_Process | "
-        "Where-Object { $_.CommandLine -like '*BatchClipboard*launcher.pyw*' } | "
+        "Where-Object { $_.CommandLine -like '*batch_clipboard.py*' -or $_.CommandLine -like '*BatchClipboard*launcher.pyw*' } | "
         "ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"
     )
     subprocess.run(
@@ -62,7 +59,7 @@ def uninstall():
 
     release_modifier_keys()
     stop_running_processes()
-    time.sleep(0.4)  # Give Windows time to release file locks
+    time.sleep(0.4)
 
     reg_removed = remove_startup_entry()
 
@@ -74,7 +71,7 @@ def uninstall():
     print("====================================================")
     print(" BatchClipboard has been completely uninstalled.")
     print("====================================================")
-    print(f"• Background process : Stopped")
+    print("• Background process : Stopped")
     print(f"• Startup registry   : {'Removed' if reg_removed else 'Already clean'}")
     print(f"• Installed files    : {'Deleted' if dir_removed else 'Already clean'}")
 
