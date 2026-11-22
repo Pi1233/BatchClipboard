@@ -1,0 +1,10 @@
+{
+  "toggle_hotkey": "ctrl+alt+b",
+  "kill_hotkey": "ctrl+alt+shift+q",
+  "double_tap_ctrl": true,
+  "double_tap_interval": 0.4,
+  "separator": "shift_enter",
+  "auto_clear_after_paste": true,
+  "hud_offset_x": 395,
+  "hud_offset_y": 95
+}
